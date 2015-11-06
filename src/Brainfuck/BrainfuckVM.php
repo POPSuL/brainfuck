@@ -2,45 +2,59 @@
 
 namespace POPSuL\Brainfuck;
 
-class BrainfuckVM
+use POPSuL\Brainfuck\BrainfuckCompiler as BC;
+
+/**
+ * Class BrainfuckVM
+ *
+ * @package POPSuL\Brainfuck
+ */
+class BrainfuckVM implements VMInterface
 {
-    private $code = [];
+
+    private $memoryCapacity = 1024;
 
     private $mem = "";
 
     private $cursor = 0;
 
-    public function __construct(array $code)
+    /**
+     * @param int $memoryCapacity
+     */
+    public function __construct($memoryCapacity = 1024)
     {
-        $this->code = $code;
+        $this->memoryCapacity = $memoryCapacity;
     }
 
-    public function run($capacity = 1024)
+    /**
+     * {@inheritdoc}
+     *
+     * @param ProgramInterface $program
+     */
+    public function execute(ProgramInterface $program)
     {
-        $this->mem = array_fill(0, $capacity, 0x00);
+        $this->mem = array_fill(0, $this->memoryCapacity, 0x00);
         $this->cursor = 0;
-        for ($i = 0; $i < count($this->code); $i++) {
-            $instr = $this->code[$i];
+        $p = $program->getInstructions();
+        for ($i = 0; $i < count($p); $i++) {
+            $instr = $p[$i];
             //printf("%d\t%s\n", $i, is_array($instr) ? sprintf("%s:%d", $instr[0], $instr[1]) : $instr);
-            switch($instr) {
-                case BrainfuckCompiler::TOKEN_ADD:
-                    $this->mem[$this->cursor]++;
+            switch ($instr[0]) {
+                case BC::TOKEN_ADD:
+                    $this->mem[$this->cursor] += $instr[1];
                     break;
-                case BrainfuckCompiler::TOKEN_SUB:
-                    $this->mem[$this->cursor]--;
+                case BC::TOKEN_SUB:
+                    $this->mem[$this->cursor] -= $instr[1];
                     break;
-                case BrainfuckCompiler::TOKEN_NEXT:
-                    $this->cursor++;
+                case BC::TOKEN_SHIFT:
+                    $this->cursor += $instr[1];
                     break;
-                case BrainfuckCompiler::TOKEN_PREV:
-                    $this->cursor--;
-                    break;
-                case BrainfuckCompiler::TOKEN_OUT:
+                case BC::TOKEN_OUT:
                     echo chr($this->mem[$this->cursor]);
                     break;
-                case BrainfuckCompiler::TOKEN_IN:
-                    while(true) {
-                        echo "input value: ";
+                case BC::TOKEN_IN:
+                    while (true) {
+                        echo "Input integer value (0-255): ";
                         $v = (int)trim(readline());
                         if (!is_int($v) || $v < 0x00 || $v > 0xff) {
                             printf("Invalid value, try again\n");
@@ -49,20 +63,18 @@ class BrainfuckVM
                         $this->mem[$this->cursor] = $v;
                         break;
                     }
-                   break;
-                case BrainfuckCompiler::TOKEN_NOOP:
+                    break;
+                case BC::TOKEN_NOOP:
                     //noop
                     break;
-                default:
-                    if (is_array($instr)) {
-                        if ($instr[0] === BrainfuckCompiler::TOKEN_JNE) {
-                            if (!$this->mem[$this->cursor]) {
-                                $i = $instr[1] - 1;
-                            }
-                        } elseif ($instr[0] === BrainfuckCompiler::TOKEN_JMP) {
-                            $i = $instr[1] - 1;
-                        }
+                case BC::TOKEN_JNE:
+                    if (!$this->mem[$this->cursor]) {
+                        $i = $instr[1] - 1;
                     }
+                    break;
+                case BC::TOKEN_JMP:
+                    $i = $instr[1] - 1;
+                    break;
             }
         }
     }

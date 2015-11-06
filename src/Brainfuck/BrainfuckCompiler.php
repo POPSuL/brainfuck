@@ -2,53 +2,60 @@
 
 namespace POPSuL\Brainfuck;
 
-class BrainfuckCompiler
+use POPSuL\Brainfuck\Exception\ParserException;
+
+/**
+ * Class BrainfuckCompiler
+ *
+ * @package POPSuL\Brainfuck
+ */
+class BrainfuckCompiler implements CompilerInterface
 {
 
-    const TOKEN_NEXT = 'NEXT';
-    const TOKEN_PREV = 'PREV';
-    const TOKEN_ADD = 'ADD';
-    const TOKEN_SUB = 'SUB';
-    const TOKEN_OUT = 'OUT';
-    const TOKEN_IN = 'IN';
-    const TOKEN_JMP = 'JMP';
-    const TOKEN_JNE = 'JNE';
-    const TOKEN_NOOP = 'NOOP';
-
-    public static function compile($programm)
+    public function __construct()
     {
-        $programm = str_replace(" ", "", $programm);
-        $programm = str_replace("\n", "", $programm);
-        $out = [];
+    }
 
+    /**
+     * {@inheritdoc}
+     *
+     * @param $code
+     * @return BrainfuckProgram
+     * @throws ParserException
+     */
+    public function compile($code)
+    {
+        $code = str_replace([" ", "\n", "\t"], "", $code);
+
+        $out = [];
         $labels = [];
 
-        for ($i = 0; $i < strlen($programm); $i++) {
-            switch ($programm[$i]) {
+        for ($i = 0; $i < strlen($code); $i++) {
+            switch ($code[$i]) {
                 case '>':
-                    $out[] = self::TOKEN_NEXT;
+                    $out[] = [self::TOKEN_SHIFT, 1];
                     break;
                 case '<':
-                    $out[] = self::TOKEN_PREV;
+                    $out[] = [self::TOKEN_SHIFT, -1];
                     break;
                 case '+':
-                    $out[] = self::TOKEN_ADD;
+                    $out[] = [self::TOKEN_ADD, 1];
                     break;
                 case '-':
-                    $out[] = self::TOKEN_SUB;
+                    $out[] = [self::TOKEN_SUB, 1];
                     break;
                 case '.':
-                    $out[] = self::TOKEN_OUT;
+                    $out[] = [self::TOKEN_OUT];
                     break;
                 case ',':
-                    $out[] = self::TOKEN_IN;
+                    $out[] = [self::TOKEN_IN];
                     break;
                 case '[':
                     $level = 0;
-                    for ($j = $i + 1; $j < strlen($programm); $j++) {
-                        if ($programm[$j] === '[') {
+                    for ($j = $i + 1; $j < strlen($code); $j++) {
+                        if ($code[$j] === '[') {
                             $level++;
-                        } elseif ($programm[$j] === ']') {
+                        } elseif ($code[$j] === ']') {
                             if ($level === 0) {
                                 array_push($labels, $i);
                                 $out[] = [self::TOKEN_JNE, $j + 1];
@@ -65,9 +72,10 @@ class BrainfuckCompiler
                     $out[] = [self::TOKEN_JMP, array_pop($labels)];
                     break;
                 default:
-                    throw new ParserException(sprintf("invalid token %s", $programm[$i]));
+                    throw new ParserException(sprintf("invalid token %s", $code[$i]));
             }
         }
-        return $out;
+        $out[] = [self::TOKEN_NOOP];
+        return new BrainfuckProgram($out);
     }
 }

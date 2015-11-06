@@ -1,20 +1,30 @@
 <?php
 
+use POPSuL\Brainfuck\BrainfuckOptimizer;
 use POPSuL\Brainfuck\BrainfuckVM;
 use POPSuL\Brainfuck\BrainfuckCompiler;
-use POPSuL\Brainfuck\Generator;
+use POPSuL\Brainfuck\PHPGenerator;
 
 require __DIR__ . '/vendor/autoload.php';
 
-$program = <<<FUCK_MY_BRAIN_AGAIN
+$code = <<<FUCK_MY_BRAIN_AGAIN
 ++++++++++[>+++++++>++++++++++>+++>+<<<<-]>++
  .>+.+++++++..+++.>++.<<+++++++++++++++.>.+++.
  ------.--------.>+.>.
 FUCK_MY_BRAIN_AGAIN;
 
-$code = BrainfuckCompiler::compile($program);
-$vm = new BrainfuckVM($code);
-$vm->run();
+$program = (new BrainfuckCompiler())->compile($code);
+$optimized = $program->optimize(new BrainfuckOptimizer());
 
-$generator = new Generator($code);
-echo $generator->generate();
+printf("Not optimized size: %d instructions\n", count($program->getInstructions()));
+printf("Optimized size: %d instructions\n\n", count($optimized->getInstructions()));
+
+$vm = new BrainfuckVM();
+
+printf("Not optimized program:\n");
+$vm->execute($program);
+
+printf("Optimized program:\n");
+$vm->execute($optimized);
+
+//echo $program->generateCode(new PHPGenerator());
