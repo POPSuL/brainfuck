@@ -71,6 +71,9 @@ class BrainfuckCompiler implements CompilerInterface
                 case ']':
                     $out[] = [self::TOKEN_JMP, array_pop($labels)];
                     break;
+                case ';':
+                    $out[] = [self::TOKEN_DELAY, 50];
+                    break;
                 default:
                     throw new ParserException(sprintf("invalid token %s", $code[$i]));
             }

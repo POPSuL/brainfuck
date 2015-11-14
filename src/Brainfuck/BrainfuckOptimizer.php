@@ -29,6 +29,7 @@ class BrainfuckOptimizer implements OptimizerInterface
         $code = $this->toFixedAdressSpace($code);
         $code = $this->optimizeIncDecMasturbation($code);
         $code = $this->optimizeShiftMasturbation($code);
+        $code = $this->optimizeDelays($code);
         $code = $this->restoreNativeAddressSpace($code);
 
         return new BrainfuckProgram($code);
@@ -152,5 +153,14 @@ class BrainfuckOptimizer implements OptimizerInterface
             }
         }
         return $code;
+    }
+
+    /**
+     * @param array $code
+     * @return array
+     */
+    private function optimizeDelays(array $code)
+    {
+        return $code; //just stub
     }
 }

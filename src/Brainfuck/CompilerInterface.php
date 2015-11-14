@@ -18,6 +18,7 @@ interface CompilerInterface
     const TOKEN_JMP = 'JMP';
     const TOKEN_JNE = 'JNE';
     const TOKEN_NOOP = 'NOOP';
+    const TOKEN_DELAY = 'DELAY';
 
     /**
      * Compiles a fuckin programm
